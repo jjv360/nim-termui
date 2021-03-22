@@ -1,5 +1,3 @@
-import terminal
-import termui/ansi
 import termui/widget
 import termui/inputfield
 import termui/spinner
@@ -28,3 +26,4 @@ proc termuiSpinner*(text : string = "Please wait...", spinnerIcons : Spinner = S
     # Create widget
     let widget = TermuiSpinner.init(text, spinnerIcons)
     widget.start()
+    return widget

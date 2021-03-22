@@ -58,82 +58,122 @@ proc enableAnsiOnWindowsConsole() =
 
 
 ## Parent class for widgets
-when compileOption("threads"):
-    class TermuiWidget:
+class TermuiWidgetBase:
 
-        ## When start() is called this is set to true. Will block until this becomes false.
-        var isBlocking = false
+    ## Render inline with user input, or render outside in a thread
+    var renderInBackgroundContinuously = false
 
-        ## Render continuously ona  background thread, until stop() is called
-        var renderContinuously = false
+    ## Set to false to end the background render thread
+    var renderInBackgroundShouldContinue = false
+
+    ## When start() is called this is set to true. Will block until this becomes false.
+    var isBlocking = false
+
+    ## Last frame buffer
+    var lastFrame = ""
+
+    ## Render function, subclasses should override this to return the new values
+    method render() : string = ""
+
+    ## Called when the user inputs a character while we are blocking
+    method onCharacterInput(chr : char) = discard
+
+    ## Start rendering. This will block until isBlocking becomes false. Subclasses should make it false.
+    method start() =
+
+        # Enable ANSI support for Windows terminals
+        enableAnsiOnWindowsConsole()
+
+        # If rendering continuously, start thread now
+        if this.renderInBackgroundContinuously:
+            this.startThread()
+            return
+
+        # Start rendering on same thread as user input
+        while true:
+
+            # Render next frame
+            this.renderFrame()
+
+            # Stop if done
+            if not this.isBlocking:
+                break
+
+            # Wait for user input
+            let chr = getch()
+            this.onCharacterInput(chr)
+
+
+    ## Render the next frame. This can be called either on the main thread or a background thread, depending
+    ## if renderInBackgroundContinuously is true or not.
+    method renderFrame() = 
+
+        # Get next line output
+        let line = this.render()
+        if line != this.lastFrame:
+
+            # Clear line
+            stdout.write(ansiEraseLine)
+
+            # Print output
+            stdout.write(line)
+
+            # Store it
+            this.lastFrame = line
+
+    ## Starts the backgound thread. Called on the main thread.
+    method startThread() = raiseAssert("In order to use this widget, you must compile your app with the --threads:on flag.")
+
+
+# Check for thread support
+when not compileOption("threads"):
+
+    # Just use the base class
+    class TermuiWidget of TermuiWidgetBase
+
+else:
+
+    
+
+    # Create subclass with thread support
+    class TermuiWidget of TermuiWidgetBase:
 
         ## Thread
-        var thread : Thread[TermuiWidget] = Thread()
+        var thread : Thread[pointer]
 
-        ## Render function, subclasses should override this to return the new values
-        method render() : string = ""
+        ## Starts the backgound thread. Called on the main thread.
+        method startThread() =
 
-        ## Called when the user inputs a character while we are blocking
-        method onCharacterInput(chr : char) = discard
+            # Prevent this item from being garbage collected
+            GC_ref(this)
 
-        ## Start rendering. This will block until isBlocking becomes false. Subclasses should make it false.
-        method start() =
+            # Create thread
+            this.renderInBackgroundShouldContinue = true
+            this.thread.createThread(proc(thisPtr : pointer) {.thread.} =
 
-            # Enable ANSI support for Windows terminals
-            enableAnsiOnWindowsConsole()
+                # Run thread code
+                let this = cast[TermuiWidget](thisPtr)
+                this.runThread()
 
-            # If rendering continuously, start thread now
-            if this.renderContinuously:
+                # Remove GC reference
+                sleep(100)
+                GC_unref(this)
 
-                # Create thread
-                thread.createThread(proc(this : TermuiWidget) = this.runThread(), this)
-                return
+            , cast[pointer](this))
 
-            # Current line buffer
-            var buffer = ""
-
-            # Start rendering on same thread as user input
-            while true:
-
-                # Get next line output
-                let line = this.render()
-                if line != buffer:
-
-                    # Clear line
-                    stdout.write(ansiEraseLine)
-
-                    # Print output
-                    stdout.write(line)
-
-                    # Store it
-                    buffer = line
-
-                # Wait for user input
-                let chr = getch()
-                this.onCharacterInput(chr)
-
-                # Stop if done
-                if not this.isBlocking:
-                    break
 
         ## Runs on a background thread
-        method runThread() =
+        method runThread() {.thread.} =
 
             # Continually re-render
             while true:
 
-                # Get next line output
-                let line = this.render()
-                if line != buffer:
+                # Check if should end
+                if not this.renderInBackgroundShouldContinue:
+                    break
 
-                    # Clear line
-                    stdout.write(ansiEraseLine)
-
-                    # Print output
-                    stdout.write(line)
-
-                    # Store it
-                    buffer = line
+                # Render next frame
+                this.renderFrame()
 
                 # Wait a bit
-                sleep(1000 / 30)
+                sleep(int(1000 / 30))
