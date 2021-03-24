@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.1.0"
+version       = "0.1.1"
 author        = "jjv360"
 description   = "Simple UI components for the terminal."
 license       = "MIT"
@@ -12,3 +12,4 @@ installExt    = @["nim"]
 
 requires "nim >= 1.4.4"
 requires "classes >= 0.2.0"
+requires "elvis >= 0.2.0"

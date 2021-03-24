@@ -24,8 +24,8 @@ let password = termuiAskPassword("Enter your password:")
 # Select multiple (TODO)
 # let categories = termuiSelectMultiple("Select categories:", options = @["Games", "Productivity", "Utilities"])
 
-# Confirmation (TODO)
-# let confirmed = termuiConfirm("Are you sure you want to continue?")
+# Confirmation
+let confirmed = termuiConfirm("Are you sure you want to continue?")
 
 # Spinner (requires --threads:on flag when compiling)
 let spinner = termuiSpinner("Checking your internet...")

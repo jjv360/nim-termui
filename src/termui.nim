@@ -2,6 +2,7 @@ import termui/widget
 import termui/inputfield
 import termui/spinner
 import termui/spinners
+import termui/confirmfield
 
 ## Ask for some input from the user
 proc termuiAsk*(question : string, defaultValue : string = "", mask : string = "") : string =
@@ -27,3 +28,12 @@ proc termuiSpinner*(text : string = "Please wait...", spinnerIcons : Spinner = S
     let widget = TermuiSpinner.init(text, spinnerIcons)
     widget.start()
     return widget
+
+
+## Ask for confirmation from the user
+proc termuiConfirm*(question : string) : bool =
+
+    # Create widget
+    let widget = TermuiConfirmField.init(question)
+    widget.start()
+    return widget.value
