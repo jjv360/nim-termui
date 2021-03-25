@@ -1,5 +1,5 @@
 ![](https://img.shields.io/badge/status-unstable-lightgray)
-![](https://img.shields.io/badge/windows-√-green)
+![](https://img.shields.io/badge/windows-✓-green)
 ![](https://img.shields.io/badge/linux-%3F-lightgray)
 ![](https://img.shields.io/badge/mac-%3F-lightgray)
 
