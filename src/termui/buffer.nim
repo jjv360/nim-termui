@@ -142,7 +142,7 @@ class TerminalBuffer:
         this.checkThread()
 
         # Get terminal width
-        let maxWidth = terminalWidth()
+        let maxWidth = terminalWidth() - 1
 
         # Go through each character
         for rune in text.toRunes():
@@ -169,7 +169,7 @@ class TerminalBuffer:
         this.checkThread()
 
         # Get terminal width
-        let maxWidth = terminalWidth()
+        let maxWidth = terminalWidth() - 1
 
         # Check if this is the first draw
         if this.isFirstDraw:
@@ -234,9 +234,9 @@ class TerminalBuffer:
                 # Write the new character
                 stdout.write(cellCharacter.character)
                 this.screenCursorX += 1
-                if this.screenCursorX >= maxWidth:
-                    this.screenCursorX = 0
-                    this.screenCursorY += 1
+                # if this.screenCursorX >= maxWidth:
+                #     this.screenCursorX = 0
+                #     this.screenCursorY += 1
 
                 # Store updated character
                 cellScreen.character = cellCharacter.character
