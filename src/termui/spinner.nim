@@ -2,6 +2,7 @@ import classes
 import ./ansi
 import ./widget
 import ./spinners
+import ./buffer
 import times
 import terminal
 
@@ -29,18 +30,17 @@ class TermuiSpinner of TermuiWidget:
 
     ## Constructor
     method init(statusText : string = "Loading...", spinnerIcon : Spinner) =
+        super.init()
 
         # Store vars
-        this.renderInBackgroundContinuously = true
+        this.buffer.cursorVisible = false
+        this.isThreaded = true
         this.statusText = statusText
         this.spinnerIcon = spinnerIcon
 
-        # Disable cursor
-        hideCursor()
-
 
     ## Render
-    method render() : string =
+    method render() =
 
         # Check if the frame should be advanced
         let lastFrameMillis = (cpuTime() - this.lastFrameUpdate) * 1000
@@ -54,32 +54,42 @@ class TermuiSpinner of TermuiWidget:
             if this.currentFrame >= this.spinnerIcon.frames.len():
                 this.currentFrame = 0
 
+        # Clear the buffer
+        this.buffer.clear()
+
         # Draw frame icon
-        var output = ""
         if this.state == Running:
 
             # Draw progress frame
-            output &= fgLightBlue(this.spinnerIcon.frames[this.currentFrame])
+            this.buffer.moveTo(0, 0)
+            this.buffer.setForegroundColor(ansiForegroundLightBlue)
+            this.buffer.write(this.spinnerIcon.frames[this.currentFrame])
 
         elif this.state == Complete:
 
             # Draw checkmark
-            output &= fgGreen("√")
+            this.buffer.moveTo(0, 0)
+            this.buffer.setForegroundColor(ansiForegroundGreen)
+            this.buffer.write("√")
 
         elif this.state == Warning:
 
             # Draw warning icon
-            output &= fgYellow("!")
+            this.buffer.moveTo(0, 0)
+            this.buffer.setForegroundColor(ansiForegroundYellow)
+            this.buffer.write("!")
 
         elif this.state == Error:
 
             # Draw error icon
-            output &= fgRed("!")
+            this.buffer.moveTo(0, 0)
+            this.buffer.setForegroundColor(ansiForegroundRed)
+            this.buffer.write("!")
 
         # Add text
-        output &= " "
-        output &= this.statusText
-        return output
+        this.buffer.setForegroundColor()
+        this.buffer.write(" ")
+        this.buffer.write(this.statusText)
 
 
     ## Update text
@@ -96,12 +106,7 @@ class TermuiSpinner of TermuiWidget:
 
         # Update state re-render
         this.state = Complete
-        this.renderInBackgroundShouldContinue = false
-        this.renderFrame()
-        echo ""
-
-        # Show cursor again
-        showCursor()
+        this.finish()
         
 
     ## Finish with warning
@@ -113,12 +118,7 @@ class TermuiSpinner of TermuiWidget:
 
         # Update state re-render
         this.state = Warning
-        this.renderInBackgroundShouldContinue = false
-        this.renderFrame()
-        echo ""
-
-        # Show cursor again
-        showCursor()
+        this.finish()
         
 
     ## Finish with error
@@ -130,9 +130,4 @@ class TermuiSpinner of TermuiWidget:
 
         # Update state re-render
         this.state = Error
-        this.renderInBackgroundShouldContinue = false
-        this.renderFrame()
-        echo ""
-
-        # Show cursor again
-        showCursor()
+        this.finish()

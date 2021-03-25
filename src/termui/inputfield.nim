@@ -1,6 +1,7 @@
 import classes
 import ./ansi
 import ./widget
+import ./buffer
 import strutils
 
 ## Input field
@@ -20,35 +21,44 @@ class TermuiInputField of TermuiWidget:
 
     ## Constructor
     method init(question : string, defaultValue : string = "", mask : string = "") =
+        super.init()
 
         # Store vars
-        this.isBlocking = true
         this.question = question
         this.defaultValue = defaultValue
         this.mask = mask
 
 
     ## Render
-    method render() : string =
+    method render() =
 
+        # Clear the buffer
+        this.buffer.clear()
+
+        # Draw indicator
+        this.buffer.moveTo(0, 0)
+        this.buffer.setForegroundColor(ansiForegroundYellow)
+        this.buffer.write("> ")
+        
         # Show the question
-        var output = fgYellow("> ") & this.question
+        this.buffer.setForegroundColor()
+        this.buffer.write(this.question)
 
         # Show the default value if necessary
         if this.defaultValue.len() > 0 and this.value.len() == 0:
-            output &= fgDarkGray(" [" & this.defaultValue & "]")
+            this.buffer.setForegroundColor(ansiForegroundDarkGray)
+            this.buffer.write(" [" & this.defaultValue & "]")
 
         # Show input prompt
-        output &= fgYellow(" => ")
+        this.buffer.setForegroundColor(ansiForegroundYellow)
+        this.buffer.write(" => ")
 
         # Show current input, or show mask
+        this.buffer.setForegroundColor()
         if this.mask.len() > 0:
-            output &= repeat(this.mask, this.value.len())
+            this.buffer.write(repeat(this.mask, this.value.len()))
         else:
-            output &= this.value
-
-        # Done
-        return output
+            this.buffer.write(this.value)
 
 
     ## Called when the user inputs a character
@@ -65,8 +75,7 @@ class TermuiInputField of TermuiWidget:
         elif code == 13:
 
             # Enter key! Finish this
-            this.isBlocking = false
-            echo ""
+            this.finish()
             return
 
         elif code == 127:

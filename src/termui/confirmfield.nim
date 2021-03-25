@@ -1,6 +1,7 @@
 import classes
 import ./widget
 import ./ansi
+import ./buffer
 import elvis
 
 ## Input field
@@ -12,31 +13,38 @@ class TermuiConfirmField of TermuiWidget:
     ## Confirm value
     var value = false
 
-    ## Complete
-    var isComplete = false
-
     ## Constructor
     method init(question : string) =
+        super.init()
 
         # Store vars
-        this.isBlocking = true
         this.question = question
 
 
     ## Render
-    method render() : string =
+    method render() =
 
+        # Clear the buffer
+        this.buffer.clear()
+
+        # Draw indicator
+        this.buffer.moveTo(0, 0)
+        this.buffer.setForegroundColor(ansiForegroundYellow)
+        this.buffer.write("> ")
+        
         # Show the question
-        var output = fgYellow("> ") & this.question
+        this.buffer.setForegroundColor()
+        this.buffer.write(this.question)
 
         # Show input prompt or result
-        if this.isComplete:
-            output &= fgYellow(" => ") & (this.value ? "Yes" ! "No")
+        if this.isFinished:
+            this.buffer.setForegroundColor(ansiForegroundYellow)
+            this.buffer.write(" => ")
+            this.buffer.setForegroundColor()
+            this.buffer.write(this.value ? "Yes" ! "No")
         else:
-            output &= fgYellow(" (y/n) ")
-
-        # Done
-        return output
+            this.buffer.setForegroundColor(ansiForegroundYellow)
+            this.buffer.write(" (y/n) ")
 
 
     ## Overrride character input
@@ -45,13 +53,7 @@ class TermuiConfirmField of TermuiWidget:
         # Check what character was pressed
         if chr == 'y' or chr == 'Y':
             this.value = true
-            this.isBlocking = false
-            this.isComplete = true
-            this.renderFrame()
-            echo ""
+            this.finish()
         elif chr == 'n' or chr == 'N':
             this.value = false
-            this.isBlocking = false
-            this.isComplete = true
-            this.renderFrame()
-            echo ""
+            this.finish()

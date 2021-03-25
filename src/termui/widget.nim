@@ -1,7 +1,9 @@
 import classes
 import terminal
 import ./ansi
+import ./buffer
 import os
+import strutils
 
 ## Check if on Windows, and if so then define some useful win32 APIs we're going to call later
 when defined(windows):
@@ -38,42 +40,20 @@ proc enableAnsiOnWindowsConsole() =
             discard SetConsoleMode(hTerm, flags)
 
 
-## Compare two strings, and return the index of the first character where they differ, or
-## return -1 if they are an exact match.
-# proc compare(str1 : string, str2 : string) : int =
-
-#     # Go through each character
-#     for i in 0 ..< max(str1.len(), str2.len()):
-
-#         # If the one string is longer than the other, stop here
-#         if i >= str1.len() or i >= str2.len():
-#             return i
-
-#         # Compare characters
-#         if str1[i] != str2[i]:
-#             return i
-
-#     # It's an exact match!
-#     return -1
-
-
 ## Parent class for widgets
 class TermuiWidgetBase:
 
     ## Render inline with user input, or render outside in a thread
-    var renderInBackgroundContinuously = false
+    var isThreaded = false
 
-    ## Set to false to end the background render thread
-    var renderInBackgroundShouldContinue = false
+    ## True once this component is done and no longer updating
+    var isFinished = false
 
-    ## When start() is called this is set to true. Will block until this becomes false.
-    var isBlocking = false
+    ## Frame buffer
+    var buffer : TerminalBuffer = TerminalBuffer.init()
 
-    ## Last frame buffer
-    var lastFrame = ""
-
-    ## Render function, subclasses should override this to return the new values
-    method render() : string = ""
+    ## Render function, subclasses should override this and update the buffer
+    method render() = discard
 
     ## Called when the user inputs a character while we are blocking
     method onCharacterInput(chr : char) = discard
@@ -84,20 +64,22 @@ class TermuiWidgetBase:
         # Enable ANSI support for Windows terminals
         enableAnsiOnWindowsConsole()
 
+        # TODO: Enable UTF8 output for Windows terminals (chcp 65001)
+
         # If rendering continuously, start thread now
-        if this.renderInBackgroundContinuously:
+        if this.isThreaded:
             this.startThread()
             return
 
         # Start rendering on same thread as user input
         while true:
 
+            # Stop if done
+            if this.isFinished:
+                break
+
             # Render next frame
             this.renderFrame()
-
-            # Stop if done
-            if not this.isBlocking:
-                break
 
             # Wait for user input
             let chr = getch()
@@ -108,20 +90,28 @@ class TermuiWidgetBase:
     ## if renderInBackgroundContinuously is true or not.
     method renderFrame() = 
 
-        # Get next line output
-        let line = this.render()
-        if line != this.lastFrame:
+        # Allow subclass to update the buffer
+        this.render()
 
-            # Clear line
-            stdout.write(ansiEraseLine)
+        # Draw buffer to the screen
+        this.buffer.draw()
 
-            # Print output
-            stdout.write(line)
 
-            # Store it
-            this.lastFrame = line
+    ## Finish this widget
+    method finish() =
 
-    ## Starts the backgound thread. Called on the main thread.
+        # Stop the loop
+        this.isFinished = true
+
+        # Run one last output just in case it changed when finishing
+        if not this.isThreaded:
+            this.renderFrame()
+
+        # Clean up the terminal output ready for standard writing again
+        this.buffer.finish()
+
+
+    ## Starts the background thread. Called on the main thread.
     method startThread() = raiseAssert("In order to use this widget, you must compile your app with the --threads:on flag.")
 
 
@@ -133,7 +123,8 @@ when not compileOption("threads"):
 
 else:
 
-    
+    # Extra imports
+    # import locks
 
     # Create subclass with thread support
     class TermuiWidget of TermuiWidgetBase:
@@ -144,20 +135,17 @@ else:
         ## Starts the backgound thread. Called on the main thread.
         method startThread() =
 
-            # Prevent this item from being garbage collected
-            GC_ref(this)
-
             # Create thread
-            this.renderInBackgroundShouldContinue = true
+            var this2 = this
             this.thread.createThread(proc(thisPtr : pointer) {.thread.} =
 
                 # Run thread code
-                let this = cast[TermuiWidget](thisPtr)
+                var this = cast[TermuiWidget](thisPtr)
                 this.runThread()
 
                 # Remove GC reference
-                sleep(100)
-                GC_unref(this)
+                # sleep(2000)
+                # GC_unref(this)
 
             , cast[pointer](this))
 
@@ -169,7 +157,7 @@ else:
             while true:
 
                 # Check if should end
-                if not this.renderInBackgroundShouldContinue:
+                if this.isFinished:
                     break
 
                 # Render next frame
@@ -177,3 +165,18 @@ else:
 
                 # Wait a bit
                 sleep(int(1000 / 30))
+
+            # Render one more time before exiting
+            this.renderFrame()
+
+
+        ## Finish this widget
+        method finish() =
+
+            # Kill the thread, wait for it to finish
+            if this.isThreaded:
+                this.isFinished = true
+                this.thread.joinThread()
+
+            # Continue
+            super.finish()
