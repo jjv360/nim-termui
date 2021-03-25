@@ -107,12 +107,21 @@ class TermuiWidgetBase:
         if not this.isThreaded:
             this.renderFrame()
 
+        # In the case where threading is not supported but this widget wanted to be threaded,
+        # we can still draw our last frame here. It's something, at least...
+        when not compileOption("threads"):
+            if this.isThreaded:
+                this.renderFrame()
+
         # Clean up the terminal output ready for standard writing again
         this.buffer.finish()
 
 
     ## Starts the background thread. Called on the main thread.
-    method startThread() = raiseAssert("In order to use this widget, you must compile your app with the --threads:on flag.")
+    method startThread() = 
+    
+        # Not supported! Let's just draw one iteration now
+        this.renderFrame()
 
 
 # Check for thread support
