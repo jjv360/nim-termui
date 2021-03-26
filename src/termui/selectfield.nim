@@ -2,6 +2,7 @@ import classes
 import ./widget
 import ./ansi
 import ./buffer
+import ./input
 import elvis
 
 ## Select field
@@ -81,30 +82,22 @@ class TermuiSelectField of TermuiWidget:
 
 
     ## Overrride character input
-    method onCharacterInput(chr : char) =
+    method onInput(event : KeyboardEvent) =
     
         # Check what character was pressed
-        let code = chr.int()
-        if code == 13:
+        if event.key == "Enter":
 
             # Enter key! Finish this
             this.finish()
-            return
 
-
-    ## Called when the user inputs a special keycode, like an arrow press etc
-    method onControlInput(chr : char) = 
-
-        # Check what was pressed
-        let code = chr.int()
-        if code == 72:
+        elif event.key == "ArrowUp":
 
             # Up arrow!
             this.selectedIndex -= 1
             if this.selectedIndex < 0:
                 this.selectedIndex = this.options.len - 1
         
-        elif code == 80:
+        elif event.key == "ArrowDown":
 
             # Down arrow!
             this.selectedIndex += 1

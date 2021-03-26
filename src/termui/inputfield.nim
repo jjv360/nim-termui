@@ -2,6 +2,7 @@ import classes
 import ./ansi
 import ./widget
 import ./buffer
+import ./input
 import strutils
 
 ## Input field
@@ -62,32 +63,31 @@ class TermuiInputField of TermuiWidget:
 
 
     ## Called when the user inputs a character
-    method onCharacterInput(chr : char) =
+    method onInput(event : KeyboardEvent) =
 
         # Check for special codes
-        let code = chr.int()
-        if code == 8:
+        if event.key == "Backspace":
 
             # Backspace key! Remove a character
             if this.value.len() > 0: this.value = this.value.substr(0, this.value.len() - 2)
             return
 
-        elif code == 13:
+        elif event.key == "Enter":
 
             # Enter key! Finish this
             if this.value.len == 0: this.value = this.defaultValue
             this.finish()
             return
 
-        elif code == 127:
+        elif event.key == "Delete":
 
             # Delete key!
             return
 
-        elif code <= 31:
+        elif event.key.len != 1:
 
             # Ignore other control characters
             return
 
         # Add it to the current value
-        this.value &= chr
+        this.value &= event.key

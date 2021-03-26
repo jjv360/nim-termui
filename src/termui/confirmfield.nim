@@ -2,6 +2,7 @@ import classes
 import ./widget
 import ./ansi
 import ./buffer
+import ./input
 import elvis
 
 ## Input field
@@ -48,12 +49,12 @@ class TermuiConfirmField of TermuiWidget:
 
 
     ## Overrride character input
-    method onCharacterInput(chr : char) =
+    method onInput(event : KeyboardEvent) =
     
         # Check what character was pressed
-        if chr == 'y' or chr == 'Y':
+        if event.key == "y" or event.key == "Y":
             this.value = true
             this.finish()
-        elif chr == 'n' or chr == 'N':
+        elif event.key == "n" or event.key == "N":
             this.value = false
             this.finish()

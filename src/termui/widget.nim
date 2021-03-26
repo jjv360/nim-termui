@@ -2,11 +2,9 @@ import classes
 import terminal
 import ./ansi
 import ./buffer
+import ./input
 import os
 import strutils
-
-# We need the non-standard _getch
-proc getch2() : char {.header: "<conio.h>", importc: "_getch".}
 
 ## Check if on Windows, and if so then define some useful win32 APIs we're going to call later
 when defined(windows):
@@ -58,11 +56,8 @@ class TermuiWidgetBase:
     ## Render function, subclasses should override this and update the buffer
     method render() = discard
 
-    ## Called when the user inputs a character while we are blocking
-    method onCharacterInput(chr : char) = discard
-
-    ## Called when the user inputs a special keycode, like an arrow press etc
-    method onControlInput(chr : char) = discard
+    ## Called when the user inputs something on the keyboard while we are blocking
+    method onInput(event : KeyboardEvent) = discard
 
     ## Start rendering. This will block until isBlocking becomes false. Subclasses should make it false.
     method start() =
@@ -88,17 +83,8 @@ class TermuiWidgetBase:
             this.renderFrame()
 
             # Wait for user input
-            let chr = getch2()
-            if chr.int == 0 or chr.int == 224:      # <-- From https://stackoverflow.com/a/10473315/1008736
-
-                # Input was a control character, get next key now
-                let chr2 = getch2()
-                this.onControlInput(chr2)
-
-            else:
-
-                # Input was a normal character key
-                this.onCharacterInput(chr)
+            let event = readTerminalInput()
+            this.onInput(event)
 
 
     ## Render the next frame. This can be called either on the main thread or a background thread, depending

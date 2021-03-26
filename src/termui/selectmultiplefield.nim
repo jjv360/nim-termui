@@ -2,6 +2,7 @@ import classes
 import ./widget
 import ./ansi
 import ./buffer
+import ./input
 import elvis
 import strutils
 
@@ -111,35 +112,28 @@ class TermuiSelectMultipleField of TermuiWidget:
 
 
     ## Overrride character input
-    method onCharacterInput(chr : char) =
+    method onInput(event : KeyboardEvent) =
     
         # Check what character was pressed
-        let code = chr.int()
-        if code == 13:
+        if event.key == "Enter":
 
             # Enter key! Finish this
             this.finish()
             return
 
-        elif code == 32:
+        elif event.key == " ":
 
             # Space key! Toggle the current one
             this.selectedItems[this.cursorIndex] = not this.selectedItems[this.cursorIndex]
 
-
-    ## Called when the user inputs a special keycode, like an arrow press etc
-    method onControlInput(chr : char) = 
-
-        # Check what was pressed
-        let code = chr.int()
-        if code == 72:
+        elif event.key == "ArrowUp":
 
             # Up arrow!
             this.cursorIndex -= 1
             if this.cursorIndex < 0:
                 this.cursorIndex = this.options.len - 1
         
-        elif code == 80:
+        elif event.key == "ArrowDown":
 
             # Down arrow!
             this.cursorIndex += 1
