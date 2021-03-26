@@ -28,3 +28,4 @@ echo fmt"Welcome {username}, your password length is {password.len()}. Enter the
 # Ask for information
 discard termuiAsk("Package name?", defaultValue = "com.user.pkg")
 discard termuiConfirm("Override existing package?")
+discard termuiSelect("What kind of package?", options = @["Library", "Executable", "Hybrid (both)"])

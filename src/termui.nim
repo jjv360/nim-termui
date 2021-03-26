@@ -3,6 +3,7 @@ import termui/inputfield
 import termui/spinner
 import termui/spinners
 import termui/confirmfield
+import termui/selectfield
 
 ## Ask for some input from the user
 proc termuiAsk*(question : string, defaultValue : string = "", mask : string = "") : string =
@@ -37,3 +38,12 @@ proc termuiConfirm*(question : string) : bool =
     let widget = TermuiConfirmField.init(question)
     widget.start()
     return widget.value
+
+
+## Ask for a selection
+proc termuiSelect*(question : string, options : seq[string]) : string =
+
+    # Create widget
+    let widget = TermuiSelectField.init(question, options)
+    widget.start()
+    return options[widget.selectedIndex]

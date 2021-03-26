@@ -75,6 +75,7 @@ class TermuiInputField of TermuiWidget:
         elif code == 13:
 
             # Enter key! Finish this
+            if this.value.len == 0: this.value = this.defaultValue
             this.finish()
             return
 

@@ -18,8 +18,8 @@ let name = termuiAsk("What is your name?", defaultValue = "John")
 # Ask for password
 let password = termuiAskPassword("Enter your password:")
 
-# Select from a list (TODO)
-# let gender = termuiSelect("What is your gender?", options = @["Male", "Female"])
+# Select from a list
+let gender = termuiSelect("What is your gender?", options = @["Male", "Female"])
 
 # Select multiple (TODO)
 # let categories = termuiSelectMultiple("Select categories:", options = @["Games", "Productivity", "Utilities"])

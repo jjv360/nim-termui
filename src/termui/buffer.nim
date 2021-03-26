@@ -135,6 +135,21 @@ class TerminalBuffer:
         this.textCursorY = y
 
 
+    ## Check if a specific line is empty
+    method isLineEmpty(line : int) : bool =
+
+        # Check thread
+        this.checkThread()
+
+        # Go through line
+        for chr in this.screenBuffer[line]:
+            if $chr.character != " ":
+                return false
+
+        # Line is empty
+        return true
+
+
     ## Draw text
     method write(text : string) =
 
@@ -270,11 +285,18 @@ class TerminalBuffer:
         if not this.cursorVisible:
             showCursor()
 
+        # Find last line with text in it
+        var lastY = 0
+        for i in countdown(this.numLines-1, 0):
+            if not this.isLineEmpty(i):
+                lastY = i
+                break
+
         # Move cursor to the end of the widget
-        let offsetY = this.numLines - this.screenCursorY - 1
+        let offsetY = lastY - this.screenCursorY
         if offsetY > 0: stdout.write(ansiMoveCursorDown(offsetY))
         if offsetY < 0: stdout.write(ansiMoveCursorUp(-offsetY))
-        this.screenCursorY = this.numLines - 1
+        this.screenCursorY = lastY
 
         # Reset terminal style
         stdout.write(ansiResetStyle)

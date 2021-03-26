@@ -5,6 +5,9 @@ import ./buffer
 import os
 import strutils
 
+# We need the non-standard _getch
+proc getch2() : char {.header: "<conio.h>", importc: "_getch".}
+
 ## Check if on Windows, and if so then define some useful win32 APIs we're going to call later
 when defined(windows):
     import winlean
@@ -58,6 +61,9 @@ class TermuiWidgetBase:
     ## Called when the user inputs a character while we are blocking
     method onCharacterInput(chr : char) = discard
 
+    ## Called when the user inputs a special keycode, like an arrow press etc
+    method onControlInput(chr : char) = discard
+
     ## Start rendering. This will block until isBlocking becomes false. Subclasses should make it false.
     method start() =
 
@@ -82,8 +88,17 @@ class TermuiWidgetBase:
             this.renderFrame()
 
             # Wait for user input
-            let chr = getch()
-            this.onCharacterInput(chr)
+            let chr = getch2()
+            if chr.int == 0 or chr.int == 224:      # <-- From https://stackoverflow.com/a/10473315/1008736
+
+                # Input was a control character, get next key now
+                let chr2 = getch2()
+                this.onControlInput(chr2)
+
+            else:
+
+                # Input was a normal character key
+                this.onCharacterInput(chr)
 
 
     ## Render the next frame. This can be called either on the main thread or a background thread, depending
@@ -106,15 +121,14 @@ class TermuiWidgetBase:
         # Run one last output just in case it changed when finishing
         if not this.isThreaded:
             this.renderFrame()
+            this.buffer.finish()
 
         # In the case where threading is not supported but this widget wanted to be threaded,
         # we can still draw our last frame here. It's something, at least...
         when not compileOption("threads"):
             if this.isThreaded:
                 this.renderFrame()
-
-        # Clean up the terminal output ready for standard writing again
-        this.buffer.finish()
+                this.buffer.finish()
 
 
     ## Starts the background thread. Called on the main thread.
@@ -177,6 +191,9 @@ else:
 
             # Render one more time before exiting
             this.renderFrame()
+
+            # Clean up the terminal
+            this.buffer.finish()
 
 
         ## Finish this widget
