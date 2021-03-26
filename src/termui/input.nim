@@ -31,7 +31,7 @@ class KeyboardEvent:
 proc readTerminalInput*() : KeyboardEvent =
 
     # Create new event
-    let event = KeyboardEvent.init()
+    var event = KeyboardEvent.init()
 
     # Check OS
     when defined(windows):
@@ -61,7 +61,6 @@ proc readTerminalInput*() : KeyboardEvent =
             break
 
         # Process control keys
-        var event = KeyboardEvent.init()
         if bitand(keyEvent.dwControlKeyState, 0x0001) != 0: event.altKey = true     # <-- RIGHT_ALT_PRESSED 
         if bitand(keyEvent.dwControlKeyState, 0x0002) != 0: event.altKey = true     # <-- LEFT_ALT_PRESSED 
         if bitand(keyEvent.dwControlKeyState, 0x0004) != 0: event.ctrlKey = true    # <-- RIGHT_CTRL_PRESSED  
