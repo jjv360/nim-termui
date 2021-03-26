@@ -3,9 +3,10 @@ import ./widget
 import ./ansi
 import ./buffer
 import elvis
+import strutils
 
 ## Select field
-class TermuiSelectField of TermuiWidget:
+class TermuiSelectMultipleField of TermuiWidget:
 
     ## The user's question
     var question = ""
@@ -13,20 +14,28 @@ class TermuiSelectField of TermuiWidget:
     ## Input values
     var options : seq[string]
 
+    ## Cursor index
+    var cursorIndex = 0
+
     ## Currently selected option
-    var selectedIndex = 0
+    var selectedItems : seq[bool]
 
     ## Maximum items to display
     var maxItems = 5
 
     ## Constructor
-    method init(question : string, options : seq[string]) =
+    method init(question : string, options : seq[string], defaultValue : seq[bool] = @[]) =
         super.init()
 
         # Store vars
         this.question = question
         this.options = options
         this.buffer.cursorVisible = false
+
+        # Expand selectedItems
+        this.selectedItems = defaultValue
+        while this.selectedItems.len < this.options.len:
+            this.selectedItems.add(false)
 
 
     ## Render
@@ -50,14 +59,31 @@ class TermuiSelectField of TermuiWidget:
             # Show picked value
             this.buffer.setForegroundColor(ansiForegroundYellow)
             this.buffer.write(" => ")
+
+            # Create a list of selected items
+            var selectedText : seq[string]
+            for i in 0 ..< this.options.len:
+                if this.selectedItems[i]:
+                    selectedText.add(this.options[i])
+
+            # Create text
+            let txt = selectedText.join(", ")
+
+            # Output it
             this.buffer.setForegroundColor()
-            this.buffer.write(this.options[this.selectedIndex])
+            this.buffer.write(txt)
             return
+
+        # Calculate length of longest option
+        var longestLen = 0
+        for opt in this.options:
+            if opt.len > longestLen:
+                longestLen = opt.len
 
         # Calculate offset
         let smallestOffset = 0
         let biggestOffset = max(this.options.len - this.maxItems, 0)
-        var offset = this.selectedIndex - (this.maxItems / 2).int
+        var offset = this.cursorIndex - (this.maxItems / 2).int
         if offset < smallestOffset: offset = smallestOffset
         if offset > biggestOffset: offset = biggestOffset
 
@@ -68,16 +94,20 @@ class TermuiSelectField of TermuiWidget:
             this.buffer.moveTo(2, i+1 - offset)
 
             # Draw selector icon
-            this.buffer.setForegroundColor(ansiForegroundLightBlue)
-            this.buffer.write(this.selectedIndex == i ? "> " ! "  ")
+            this.buffer.setForegroundColor(this.selectedItems[i] ? ansiForegroundGreen ! "")
+            this.buffer.write(this.selectedItems[i] ? "√ " ! "  ")
 
             # Draw option name
-            this.buffer.setForegroundColor(this.selectedIndex == i ? ansiForegroundGreen ! "")
             this.buffer.write(this.options[i])
 
-            # Draw selector icon
-            this.buffer.setForegroundColor(ansiForegroundLightBlue)
-            this.buffer.write(this.selectedIndex == i ? " <" ! "  ")
+            # Draw cursor if necessary
+            if this.cursorIndex == i:
+                this.buffer.setForegroundColor(ansiForegroundLightBlue)
+                this.buffer.write(" ".repeat(longestLen - this.options[i].len))
+                this.buffer.write(" <-- ")
+                this.buffer.setForegroundColor(ansiForegroundDarkGray)
+                this.buffer.write("space to select")
+
 
 
     ## Overrride character input
@@ -91,6 +121,11 @@ class TermuiSelectField of TermuiWidget:
             this.finish()
             return
 
+        elif code == 32:
+
+            # Space key! Toggle the current one
+            this.selectedItems[this.cursorIndex] = not this.selectedItems[this.cursorIndex]
+
 
     ## Called when the user inputs a special keycode, like an arrow press etc
     method onControlInput(chr : char) = 
@@ -100,13 +135,13 @@ class TermuiSelectField of TermuiWidget:
         if code == 72:
 
             # Up arrow!
-            this.selectedIndex -= 1
-            if this.selectedIndex < 0:
-                this.selectedIndex = this.options.len - 1
+            this.cursorIndex -= 1
+            if this.cursorIndex < 0:
+                this.cursorIndex = this.options.len - 1
         
         elif code == 80:
 
             # Down arrow!
-            this.selectedIndex += 1
-            if this.selectedIndex >= this.options.len:
-                this.selectedIndex = 0
+            this.cursorIndex += 1
+            if this.cursorIndex >= this.options.len:
+                this.cursorIndex = 0

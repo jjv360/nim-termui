@@ -4,6 +4,7 @@ import termui/spinner
 import termui/spinners
 import termui/confirmfield
 import termui/selectfield
+import termui/selectmultiplefield
 
 ## Ask for some input from the user
 proc termuiAsk*(question : string, defaultValue : string = "", mask : string = "") : string =
@@ -40,10 +41,27 @@ proc termuiConfirm*(question : string) : bool =
     return widget.value
 
 
-## Ask for a selection
+## Ask for a single selection
 proc termuiSelect*(question : string, options : seq[string]) : string =
 
     # Create widget
     let widget = TermuiSelectField.init(question, options)
     widget.start()
     return options[widget.selectedIndex]
+
+
+## Ask for multiple selection
+proc termuiSelectMultiple*(question : string, options : seq[string]) : seq[string] =
+
+    # Create widget
+    let widget = TermuiSelectMultipleField.init(question, options, @[])
+    widget.start()
+
+    # Create list of selected items
+    var selectedList : seq[string]
+    for i in 0 ..< options.len:
+        if widget.selectedItems[i]:
+            selectedList.add(options[i])
+
+    # Done
+    return selectedList
