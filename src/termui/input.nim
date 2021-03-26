@@ -1,5 +1,6 @@
 import classes
 import bitops
+import terminal
 when defined(windows):
     import winlean
 
@@ -29,8 +30,11 @@ class KeyboardEvent:
 ## Read the next key input
 proc readTerminalInput*() : KeyboardEvent =
 
+    # Create new event
+    let event = KeyboardEvent.init()
+
     # Check OS
-    if defined(windows):
+    when defined(windows):
 
         # Get handle to terminal
         let fd = getStdHandle(STD_INPUT_HANDLE)
@@ -83,24 +87,38 @@ proc readTerminalInput*() : KeyboardEvent =
         if keyEvent.wVirtualKeyCode == 0x28: event.key = "ArrowDown"                # <-- VK_DOWN
         if keyEvent.wVirtualKeyCode == 0x2E: event.key = "Delete"                   # <-- VK_DELETE
 
-        # Done
-        return event
+
+    else:
+
+        # Get first code
+        let chr1 = getch()
+        if chr1.int == 27:
+
+            # Keyboard control command, this next char should be '['
+            let chr2 = getch()
+
+            # Next should be the arrow direction
+            let chr3 = getch()
+            if chr3 == 'A': event.key = "ArrowUp"
+            if chr3 == 'B': event.key = "ArrowDown"
+            if chr3 == 'C': event.key = "ArrowRight"
+            if chr3 == 'D': event.key = "ArrowLeft"
+
+        elif chr1.int == 127:
+
+            # Enter key
+            event.key = "Backspace"
+
+        elif chr1.int == 13:
+
+            # Enter key
+            event.key = "Enter"
+
+        elif chr1.int > 31:
+
+            # Normal key
+            event.key = $chr1
 
 
-
-
-## Base class for reading keyboard input from the terminal. Use TermuiInput rather than this class.
-# class BaseTermuiInput:
-
-#     ## Read next input from the terminal, block while waiting
-#     method read() : KeyboardEvent = raiseAssert("Keyboard input not supported!")
-
-
-# ## Check OS
-# when defined(windows):
-
-#     # Import Win32's getch function
-#     proc getch2() : char {. header: "<conio.h>", importc: "_getch" .}
-
-#     class TermuiInput of BaseTermuiInput:
-
+    # Done
+    return event
