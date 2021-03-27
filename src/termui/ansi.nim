@@ -6,6 +6,7 @@ const ansiForegroundRed* = "\e[31m"
 const ansiForegroundGreen* = "\e[32m"
 const ansiForegroundYellow* = "\e[33m"
 const ansiForegroundDarkGray* = "\e[90m"
+const ansiForegroundLightGreen* = "\e[92m"
 const ansiForegroundLightBlue* = "\e[94m"
 # proc fgRed*(s: string): string = "\e[31m" & s & reset()
 # proc fgBlack*(s: string): string = "\e[30m" & s & reset()

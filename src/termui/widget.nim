@@ -41,11 +41,25 @@ proc enableAnsiOnWindowsConsole() =
             discard SetConsoleMode(hTerm, flags)
 
 
+## Widget draw modes
+type TermuiWidgetDrawMode* = enum
+
+    ## The widget start() method will block until the widget is finished. The widget will receive key events,
+    ## and will redraw after each one.
+    TermuiRedrawOnUserInput,
+
+    ## The widget will continually redraw on a background thread. It will not receive key events.
+    TermuiRedrawInThread,
+
+    ## The widget will redraw only when the caller updates the widget. It will not receive key events.
+    TermuiRedrawManually
+
+
 ## Parent class for widgets
 class TermuiWidgetBase:
 
-    ## Render inline with user input, or render outside in a thread
-    var isThreaded = false
+    ## Redraw mode
+    var redrawMode : TermuiWidgetDrawMode = TermuiRedrawOnUserInput
 
     ## True once this component is done and no longer updating
     var isFinished = false
@@ -68,8 +82,13 @@ class TermuiWidgetBase:
         # TODO: Enable UTF8 output for Windows terminals (chcp 65001)
 
         # If rendering continuously, start thread now
-        if this.isThreaded:
+        if this.redrawMode == TermuiRedrawInThread:
             this.startThread()
+            return
+
+        # If rendering on updates only, just draw one frame now
+        if this.redrawMode == TermuiRedrawManually:
+            this.renderFrame()
             return
 
         # Start rendering on same thread as user input
@@ -105,14 +124,14 @@ class TermuiWidgetBase:
         this.isFinished = true
 
         # Run one last output just in case it changed when finishing
-        if not this.isThreaded:
+        if this.redrawMode != TermuiRedrawInThread:
             this.renderFrame()
             this.buffer.finish()
 
         # In the case where threading is not supported but this widget wanted to be threaded,
         # we can still draw our last frame here. It's something, at least...
         when not compileOption("threads"):
-            if this.isThreaded:
+            if this.redrawMode == Thread:
                 this.renderFrame()
                 this.buffer.finish()
 
@@ -186,7 +205,7 @@ else:
         method finish() =
 
             # Kill the thread, wait for it to finish
-            if this.isThreaded:
+            if this.redrawMode == TermuiRedrawInThread:
                 this.isFinished = true
                 this.thread.joinThread()
 

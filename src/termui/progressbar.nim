@@ -5,102 +5,98 @@ import ./spinners
 import ./buffer
 import times
 import terminal
+import strutils
 
 ## States
-type SpinnerState = enum
+type ProgressBarState = enum
     Running, Complete, Warning, Error
 
 ## Input field
-class TermuiSpinner of TermuiWidget:
+class TermuiProgressBar of TermuiWidget:
 
     ## Status text
     var statusText = ""
 
-    ## Spinner
-    var spinnerIcon : Spinner
-
-    ## Current spinner frame
-    var currentFrame = 0
-
-    ## Last frame update
-    var lastFrameUpdate : float = cpuTime()
+    ## Current progress from 0 to 1
+    var progress = 0.0
 
     ## Current state
-    var state : SpinnerState = Running
+    var state : ProgressBarState = Running
+
+    ## Length of the bar
+    var barLength = 16
 
     ## Constructor
-    method init(statusText : string = "Loading...", spinnerIcon : Spinner) =
+    method init(statusText : string) =
         super.init()
 
         # Store vars
-        this.redrawMode = TermuiRedrawInThread
+        this.redrawMode = TermuiRedrawManually
         this.buffer.cursorVisible = false
         this.statusText = statusText
-        this.spinnerIcon = spinnerIcon
 
 
     ## Render
     method render() =
 
-        # Check if the frame should be advanced
-        let lastFrameMillis = (cpuTime() - this.lastFrameUpdate) * 1000
-        if lastFrameMillis >= this.spinnerIcon.interval.float():
-
-            # Increase frame
-            this.lastFrameUpdate = cpuTime()
-            this.currentFrame += 1
-
-            # Reset to 0 if gone past the end
-            if this.currentFrame >= this.spinnerIcon.frames.len():
-                this.currentFrame = 0
-
         # Clear the buffer
         this.buffer.clear()
+        this.buffer.moveTo(0, 0)
 
         # Draw frame icon
-        if this.state == Running:
-
-            # Draw progress frame
-            this.buffer.moveTo(0, 0)
-            this.buffer.setForegroundColor(ansiForegroundLightBlue)
-            this.buffer.write(this.spinnerIcon.frames[this.currentFrame])
-
-        elif this.state == Complete:
+        if this.state == Complete:
 
             # Draw checkmark
-            this.buffer.moveTo(0, 0)
             this.buffer.setForegroundColor(ansiForegroundGreen)
-            this.buffer.write("√")
+            this.buffer.write("√ ")
+            this.buffer.setForegroundColor()
+            this.buffer.write(this.statusText)
+            return
 
         elif this.state == Warning:
 
             # Draw warning icon
-            this.buffer.moveTo(0, 0)
             this.buffer.setForegroundColor(ansiForegroundYellow)
-            this.buffer.write("!")
+            this.buffer.write("! ")
+            this.buffer.setForegroundColor()
+            this.buffer.write(this.statusText)
+            return
 
         elif this.state == Error:
 
             # Draw error icon
-            this.buffer.moveTo(0, 0)
             this.buffer.setForegroundColor(ansiForegroundRed)
-            this.buffer.write("!")
+            this.buffer.write("! ")
+            this.buffer.setForegroundColor()
+            this.buffer.write(this.statusText)
+            return
 
-        # Add text
+        # Draw progress bar
+        let numFilled = (this.progress * this.barLength.float).int
+        let numEmpty = this.barLength - numFilled
+        this.buffer.setForegroundColor(ansiForegroundYellow)
+        this.buffer.write("[")
+        this.buffer.write("■".repeat(numFilled))
+        this.buffer.setForegroundColor(ansiForegroundLightGreen)
+        this.buffer.write(" ".repeat(numEmpty))
+        this.buffer.setForegroundColor(ansiForegroundYellow)
+        this.buffer.write("] ")
+
+        # Draw text
         this.buffer.setForegroundColor()
-        this.buffer.write(" ")
         this.buffer.write(this.statusText)
 
 
     ## Update text
-    method update(text : string) =
+    method update(progress : float, text : string = "") =
 
         # Update text
-        this.statusText = text
+        this.progress = progress
+        if text.len > 0:
+            this.statusText = text
 
         # Redraw frame if no thread support
-        when not compileOption("threads"):
-            this.renderFrame()
+        this.renderFrame()
 
 
     ## Finish with completion

@@ -5,6 +5,11 @@ import termui/spinners
 import termui/confirmfield
 import termui/selectfield
 import termui/selectmultiplefield
+import termui/progressbar
+
+export spinner
+export spinners
+export progressbar
 
 ## Ask for some input from the user
 proc termuiAsk*(question : string, defaultValue : string = "", mask : string = "") : string =
@@ -65,3 +70,12 @@ proc termuiSelectMultiple*(question : string, options : seq[string]) : seq[strin
 
     # Done
     return selectedList
+
+
+## Show a progress bar. Remember to call progressbar.complete() when done.
+proc termuiProgress*(text : string = "Please wait...") : TermuiProgressBar =
+
+    # Create widget
+    let widget = TermuiProgressBar.init(text)
+    widget.start()
+    return widget

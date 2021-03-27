@@ -31,6 +31,13 @@ let categories = termuiSelectMultiple("Select categories:", options = @["Games",
 # Confirmation
 let confirmed = termuiConfirm("Are you sure you want to continue?")
 
+# Progress bar
+let progress = termuiProgress("Uploading file...")
+progress.update(0.1)
+progress.complete("Finished!")
+progress.warn("Couldn't upload!")
+progress.fail("No internet access!")
+
 # Spinner (requires --threads:on when compiling)
 let spinner = termuiSpinner("Checking your internet...")
 spinner.update("Almost done...")
