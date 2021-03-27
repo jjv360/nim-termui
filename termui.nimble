@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.1.4"
+version       = "0.1.5"
 author        = "jjv360"
 description   = "Simple UI components for the terminal."
 license       = "MIT"

@@ -55,6 +55,26 @@ type TermuiWidgetDrawMode* = enum
     TermuiRedrawManually
 
 
+## Last terminal mode
+when not defined(windows):
+    import termios
+
+    # From terminal.nim
+    proc setRaw(fd: FileHandle, time: cint = TCSAFLUSH) =
+        var mode: Termios
+        discard fd.tcGetAttr(addr mode)
+        mode.c_iflag = mode.c_iflag and not Cflag(BRKINT or ICRNL or INPCK or
+        ISTRIP or IXON)
+        mode.c_oflag = mode.c_oflag and not Cflag(OPOST)
+        mode.c_cflag = (mode.c_cflag and not Cflag(CSIZE or PARENB)) or CS8
+        mode.c_lflag = mode.c_lflag and not Cflag(ECHO or ICANON or IEXTEN or ISIG)
+        mode.c_cc[VMIN] = 1.cuchar
+        mode.c_cc[VTIME] = 0.cuchar
+        discard fd.tcSetAttr(time, addr mode)
+
+    var lastTermiosMode: Termios
+
+
 ## Parent class for widgets
 class TermuiWidgetBase:
 
@@ -80,6 +100,12 @@ class TermuiWidgetBase:
         enableAnsiOnWindowsConsole()
 
         # TODO: Enable UTF8 output for Windows terminals (chcp 65001)
+
+        # Prevent keyboard echoing on Linux/mac
+        when not defined(windows):
+            let fd = getFileHandle(stdin)
+            discard fd.tcGetAttr(addr lastTermiosMode)
+            fd.setRaw()
 
         # If rendering continuously, start thread now
         if this.redrawMode == TermuiRedrawInThread:
@@ -131,9 +157,14 @@ class TermuiWidgetBase:
         # In the case where threading is not supported but this widget wanted to be threaded,
         # we can still draw our last frame here. It's something, at least...
         when not compileOption("threads"):
-            if this.redrawMode == Thread:
+            if this.redrawMode == TermuiRedrawInThread:
                 this.renderFrame()
                 this.buffer.finish()
+
+        # Restore keyboard echoing
+        when not defined(windows):
+            let fd = getFileHandle(stdin)
+            discard fd.tcSetAttr(TCSADRAIN, addr lastTermiosMode)
 
 
     ## Starts the background thread. Called on the main thread.

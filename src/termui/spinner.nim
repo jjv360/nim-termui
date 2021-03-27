@@ -23,7 +23,7 @@ class TermuiSpinner of TermuiWidget:
     var currentFrame = 0
 
     ## Last frame update
-    var lastFrameUpdate : float = cpuTime()
+    var lastFrameUpdate : float = epochTime()
 
     ## Current state
     var state : SpinnerState = Running
@@ -43,11 +43,11 @@ class TermuiSpinner of TermuiWidget:
     method render() =
 
         # Check if the frame should be advanced
-        let lastFrameMillis = (cpuTime() - this.lastFrameUpdate) * 1000
+        let lastFrameMillis = (epochTime() - this.lastFrameUpdate) * 1000
         if lastFrameMillis >= this.spinnerIcon.interval.float():
 
             # Increase frame
-            this.lastFrameUpdate = cpuTime()
+            this.lastFrameUpdate = epochTime()
             this.currentFrame += 1
 
             # Reset to 0 if gone past the end

@@ -277,6 +277,11 @@ class TerminalBuffer:
             # Show it
             showCursor()
 
+        
+        # Flush changes
+        if didUpdateSomething:
+            stdout.flushFile()
+
 
     ## Clean up the terminal for standard output again
     method finish() =
