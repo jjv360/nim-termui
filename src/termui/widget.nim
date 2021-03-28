@@ -6,40 +6,6 @@ import ./input
 import os
 import strutils
 
-## Check if on Windows, and if so then define some useful win32 APIs we're going to call later
-when defined(windows):
-    import winlean
-
-    ## Flag to enable ANSI support in the terminal
-    const ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
-
-    ## Retrieves the current input mode of a console's input buffer or the current output mode of a console screen buffer.
-    proc GetConsoleMode(hConsoleHandle: Handle, dwMode: ptr DWORD): WINBOOL{. stdcall, dynlib: "kernel32", importc: "GetConsoleMode" .}
-
-    ## Sets the input mode of a console's input buffer or the output mode of a console screen buffer.
-    proc SetConsoleMode(hConsoleHandle: Handle, dwMode : DWORD) : WINBOOL {. stdcall, dynlib: "kernel32", importc: "SetConsoleMode" .}
-
-
-## Allow ANSI codes on Windows
-proc enableAnsiOnWindowsConsole() =
-
-    # Prepare the Windows terminal for ANSI color codes: SetConsoleMode ENABLE_VIRTUAL_TERMINAL_PROCESSING
-    when defined(windows):
-
-        # Get Handle to the Windows terminal
-        let hTerm = getStdHandle(STD_OUTPUT_HANDLE)
-
-        # Get current console mode flags
-        var flags : DWORD = 0
-        let success = GetConsoleMode(hTerm, addr flags)
-        if success != 0:
-
-            # Add the processing flag in
-            flags = flags or ENABLE_VIRTUAL_TERMINAL_PROCESSING
-
-            # Set the terminal mode
-            discard SetConsoleMode(hTerm, flags)
-
 
 ## Widget draw modes
 type TermuiWidgetDrawMode* = enum
