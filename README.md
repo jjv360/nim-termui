@@ -31,6 +31,9 @@ let categories = termuiSelectMultiple("Select categories:", options = @["Games",
 # Confirmation
 let confirmed = termuiConfirm("Are you sure you want to continue?")
 
+# Show a label, as if the user had entered it in a input field
+termuiLabel("Your name", "John")
+
 # Progress bar
 let progress = termuiProgress("Uploading file...")
 progress.update(0.1)

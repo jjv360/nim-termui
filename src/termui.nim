@@ -6,6 +6,7 @@ import termui/confirmfield
 import termui/selectfield
 import termui/selectmultiplefield
 import termui/progressbar
+import termui/ansi
 
 export spinner
 export spinners
@@ -79,3 +80,10 @@ proc termuiProgress*(text : string = "Please wait...") : TermuiProgressBar =
     let widget = TermuiProgressBar.init(text)
     widget.start()
     return widget
+
+
+## Show a label output, as if it has been entered in a text field
+proc termuiLabel*(text : string, value : string) =
+
+    # Just output it here
+    echo ansiEraseLine() & ansiForegroundYellow & "> " & ansiResetStyle & text & ansiForegroundYellow & " => " & ansiResetStyle & value

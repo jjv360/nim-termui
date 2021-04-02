@@ -44,6 +44,8 @@ const ansiForegroundLightBlue* = "\e[94m"
 # proc bgWhite*(s: string): string= "\e[107m" & s & reset()
 
 # # formatting functions
+const ansiBold* = "\e[1m"
+const ansiUnderline* = "\e[2m"
 # proc bold*(s: string): string= "\e[1m" & s & reset()
 # proc underline*(s: string): string= "\e[4m" & s & reset()
 # proc hidden*(s: string): string= "\e[8m" & s & reset()

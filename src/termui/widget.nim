@@ -160,17 +160,16 @@ else:
         ## Starts the backgound thread. Called on the main thread.
         method startThread() =
 
+            # HACK: Lock it so the instance doesn't get garbage collected. Without this, it is giving a SIGSEGV at random places AFTER the widget
+            # is already completed and the thread ended! I don't understand it at all.
+            GC_ref(this)
+
             # Create thread
-            var this2 = this
             this.thread.createThread(proc(thisPtr : pointer) {.thread.} =
 
                 # Run thread code
                 var this = cast[TermuiWidget](thisPtr)
                 this.runThread()
-
-                # Remove GC reference
-                # sleep(2000)
-                # GC_unref(this)
 
             , cast[pointer](this))
 
@@ -205,6 +204,10 @@ else:
             if this.redrawMode == TermuiRedrawInThread:
                 this.isFinished = true
                 this.thread.joinThread()
+
+                # HACK: Unlock this for garbage collection. Well, normally, right? Except doing this triggers that same SIGSEGV at random intervals.
+                # Unfortunately, we're going to have to just waste this memory for now...
+                #GC_unref(this)
 
             # Continue
             super.finish()

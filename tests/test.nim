@@ -10,15 +10,20 @@ let username = termuiAsk("Username:")
 let password = termuiAskPassword("Password:")
 
 # Show login progress bar
-let loader : TermuiSpinner = termuiSpinner("Logging you in...")
+var loader = termuiSpinner("Logging you in...")
+for i in 0 .. 2:
+    loader.update(fmt"Logging in ({i}s)...")
+    sleep(1000)
+loader.warn("Login failed! Retrying...")
+
+# Show second login attempt
+loader = termuiSpinner("Logging you in...")
 for i in 0 .. 2:
     loader.update(fmt"Logging in ({i}s)...")
     sleep(1000)
 
 # login complete
 loader.complete("Successfully logged in!")
-# loader.warn("Could not connect.")
-# loader.fail("Could not connect.")
 
 # Fake login complete
 echo ""
