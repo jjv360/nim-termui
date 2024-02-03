@@ -54,13 +54,13 @@ class TermuiWidgetBase:
     var buffer : TerminalBuffer = TerminalBuffer.init()
 
     ## Render function, subclasses should override this and update the buffer
-    method render() = discard
+    method render() {.gcsafe.} = discard
 
     ## Called when the user inputs something on the keyboard while we are blocking
-    method onInput(event : KeyboardEvent) = discard
+    method onInput(event : KeyboardEvent) {.gcsafe.} = discard
 
     ## Start rendering. This will block until isBlocking becomes false. Subclasses should make it false.
-    method start() =
+    method start() {.gcsafe.} =
 
         # Enable ANSI support for Windows terminals
         enableAnsiOnWindowsConsole()
@@ -100,7 +100,7 @@ class TermuiWidgetBase:
 
     ## Render the next frame. This can be called either on the main thread or a background thread, depending
     ## if renderInBackgroundContinuously is true or not.
-    method renderFrame() = 
+    method renderFrame() {.gcsafe.} = 
 
         # Allow subclass to update the buffer
         this.render()
@@ -110,7 +110,7 @@ class TermuiWidgetBase:
 
 
     ## Finish this widget
-    method finish() =
+    method finish() {.gcsafe.} =
 
         # Stop the loop
         this.isFinished = true
@@ -134,7 +134,7 @@ class TermuiWidgetBase:
 
 
     ## Starts the background thread. Called on the main thread.
-    method startThread() = 
+    method startThread() {.gcsafe.} = 
     
         # Not supported! Let's just draw one iteration now
         this.renderFrame()
@@ -158,7 +158,7 @@ else:
         var thread : Thread[pointer]
 
         ## Starts the backgound thread. Called on the main thread.
-        method startThread() =
+        method startThread() {.gcsafe.} =
 
             # HACK: Lock it so the instance doesn't get garbage collected. Without this, it is giving a SIGSEGV at random places AFTER the widget
             # is already completed and the thread ended! I don't understand it at all.
@@ -175,7 +175,7 @@ else:
 
 
         ## Runs on a background thread
-        method runThread() {.thread.} =
+        method runThread() {.thread, gcsafe.} =
 
             # Continually re-render
             while true:
@@ -198,7 +198,7 @@ else:
 
 
         ## Finish this widget
-        method finish() =
+        method finish() {.gcsafe.} =
 
             # Kill the thread, wait for it to finish
             if this.redrawMode == TermuiRedrawInThread:
