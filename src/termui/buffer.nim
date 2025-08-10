@@ -57,19 +57,19 @@ class TerminalBuffer:
     
 
     ## Set background color
-    method setBackgroundColor(ansiStyle : string = "") =
+    method setBackgroundColor(ansiStyle : string = "") {.gcsafe.} =
         this.bgColor = ansiStyle
         this.ansiStyle = this.bgColor & this.fgColor & this.fontStyle
 
 
     ## Set foreground color
-    method setForegroundColor(ansiStyle : string = "") =
+    method setForegroundColor(ansiStyle : string = "") {.gcsafe.} =
         this.fgColor = ansiStyle
         this.ansiStyle = this.bgColor & this.fgColor & this.fontStyle
 
 
     ## Set font style
-    method setFontStyle(ansiStyle : string = "") =
+    method setFontStyle(ansiStyle : string = "") {.gcsafe.} =
         this.fontStyle = ansiStyle
         this.ansiStyle = this.bgColor & this.fgColor & this.fontStyle
 
@@ -77,7 +77,7 @@ class TerminalBuffer:
     ## Throw an error if we are not on the same thread that first modified this buffer. This
     ## is due to nim's Seq type being entirely un-thread-safe, as in the data literally gets
     ## corrupted just by accessing it from another thread which added items to it!
-    method checkThread() =
+    method checkThread() {.gcsafe.} =
 
         # Only if thread support is enabled...
         when compileOption("threads"):
@@ -95,7 +95,7 @@ class TerminalBuffer:
 
 
     ## Clear all data
-    method clear() =
+    method clear() {.gcsafe.} =
 
         # Check thread
         this.checkThread()
@@ -108,7 +108,7 @@ class TerminalBuffer:
 
 
     ## Get character at position
-    method charAt(x : int, y : int, screenBuffer : bool = false) : Character =
+    method charAt(x : int, y : int, screenBuffer : bool = false) : Character {.gcsafe.} =
 
         # Check thread
         this.checkThread()
@@ -130,13 +130,13 @@ class TerminalBuffer:
 
 
     ## Move cursor to position
-    method moveTo(x, y: int) =
+    method moveTo(x, y: int) {.gcsafe.} =
         this.textCursorX = x
         this.textCursorY = y
 
 
     ## Check if a specific line is empty
-    method isLineEmpty(line : int) : bool =
+    method isLineEmpty(line : int) : bool {.gcsafe.} =
 
         # Check thread
         this.checkThread()
@@ -151,7 +151,7 @@ class TerminalBuffer:
 
 
     ## Draw text
-    method write(text : string) =
+    method write(text : string) {.gcsafe.} =
 
         # Check thread
         this.checkThread()
@@ -178,7 +178,7 @@ class TerminalBuffer:
 
 
     ## Draw the change from the screen buffer
-    method draw() =
+    method draw() {.gcsafe.} =
 
         # Check thread
         this.checkThread()
@@ -284,7 +284,7 @@ class TerminalBuffer:
 
 
     ## Clean up the terminal for standard output again
-    method finish() =
+    method finish() {.gcsafe.} =
 
         # Show cursor in case it was hidden
         if not this.cursorVisible:

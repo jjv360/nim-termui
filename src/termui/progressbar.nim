@@ -37,7 +37,7 @@ class TermuiProgressBar of TermuiWidget:
 
 
     ## Render
-    method render() =
+    method render() {.gcsafe.} =
 
         # Clear the buffer
         this.buffer.clear()
@@ -88,7 +88,7 @@ class TermuiProgressBar of TermuiWidget:
 
 
     ## Update text
-    method update(progress : float, text : string = "") =
+    method update(progress : float, text : string = "") {.gcsafe.} =
 
         # Update text
         this.progress = progress
@@ -100,7 +100,7 @@ class TermuiProgressBar of TermuiWidget:
 
 
     ## Finish with completion
-    method complete(text : string = "") =
+    method complete(text : string = "") {.gcsafe.} =
 
         # Update text
         if text.len() > 0:
@@ -112,7 +112,7 @@ class TermuiProgressBar of TermuiWidget:
         
 
     ## Finish with warning
-    method warn(text : string = "") =
+    method warn(text : string = "") {.gcsafe.} =
 
         # Update text
         if text.len() > 0:
@@ -124,7 +124,7 @@ class TermuiProgressBar of TermuiWidget:
         
 
     ## Finish with error
-    method fail(text : string = "") =
+    method fail(text : string = "") {.gcsafe.} =
 
         # Update text
         if text.len() > 0:
