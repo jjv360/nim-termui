@@ -1,3 +1,5 @@
 *.exe
 tests/test
 tests/test.exe
+nimble.develop
+nimble.paths
