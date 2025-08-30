@@ -1,10 +1,8 @@
 import classes
-import terminal
 import ./ansi
 import ./buffer
 import ./input
 import os
-import strutils
 
 
 ## Widget draw modes
@@ -34,8 +32,8 @@ when not defined(windows):
         mode.c_oflag = mode.c_oflag and not Cflag(OPOST)
         mode.c_cflag = (mode.c_cflag and not Cflag(CSIZE or PARENB)) or CS8
         mode.c_lflag = mode.c_lflag and not Cflag(ECHO or ICANON or IEXTEN or ISIG)
-        mode.c_cc[VMIN] = 1.cuchar
-        mode.c_cc[VTIME] = 0.cuchar
+        mode.c_cc[VMIN] = 1.char
+        mode.c_cc[VTIME] = 0.char
         discard fd.tcSetAttr(time, addr mode)
 
     var lastTermiosMode: Termios

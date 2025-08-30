@@ -4,7 +4,6 @@ import ./widget
 import ./spinners
 import ./buffer
 import times
-import terminal
 
 ## States
 type SpinnerState = enum

@@ -1,10 +1,7 @@
 import classes
 import ./ansi
 import ./widget
-import ./spinners
 import ./buffer
-import times
-import terminal
 import strutils
 
 ## States

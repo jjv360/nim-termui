@@ -1,5 +1,4 @@
 import classes
-import bitops
 import terminal
 when defined(windows):
     import winlean
@@ -94,7 +93,7 @@ proc readTerminalInput*() : KeyboardEvent =
         if chr1.int == 27:
 
             # Keyboard control command, this next char should be '['
-            let chr2 = getch()
+            discard getch()
 
             # Next should be the arrow direction
             let chr3 = getch()
